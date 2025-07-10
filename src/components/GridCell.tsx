@@ -7,6 +7,7 @@ interface GridCellProps {
   col: number;
   isSelected: boolean;
   isFoundWord: boolean;
+  isSelecting: boolean;
   onSelect: (row: number, col: number) => void;
 }
 
@@ -16,14 +17,22 @@ export const GridCell: React.FC<GridCellProps> = ({
   col,
   isSelected,
   isFoundWord,
+  isSelecting,
   onSelect
 }) => {
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     onSelect(row, col);
   };
 
   const handleMouseEnter = (e: React.MouseEvent) => {
-    if (e.buttons === 1) { // Left mouse button is pressed
+    if (isSelecting && e.buttons === 1) { // Left mouse button is pressed
+      onSelect(row, col);
+    }
+  };
+
+  const handleMouseOver = () => {
+    if (isSelecting) {
       onSelect(row, col);
     }
   };
@@ -43,6 +52,7 @@ export const GridCell: React.FC<GridCellProps> = ({
       `}
       onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}
+      onMouseOver={handleMouseOver}
     >
       {letter}
     </div>

@@ -35,8 +35,19 @@ export const WordGrid: React.FC<WordGridProps> = ({
       }
     };
 
+    const handleMouseLeave = () => {
+      if (isSelecting) {
+        onSelectionEnd();
+      }
+    };
+
     document.addEventListener('mouseup', handleMouseUp);
-    return () => document.removeEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseleave', handleMouseLeave);
+    
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
   }, [isSelecting, onSelectionEnd]);
 
   const getFoundWordPositions = () => {
@@ -95,6 +106,7 @@ export const WordGrid: React.FC<WordGridProps> = ({
               isSelected={isSelected(rowIndex, colIndex)}
               isFoundWord={isFoundWord(rowIndex, colIndex)}
               onSelect={onCellSelect}
+              isSelecting={isSelecting}
             />
           ))
         )}

@@ -7,8 +7,8 @@ import { ChevronLeft, RotateCcw, User } from 'lucide-react';
 
 const Index = () => {
   const [gameData, setGameData] = useState(null);
-  const [foundWords, setFoundWords] = useState(new Set());
-  const [selectedCells, setSelectedCells] = useState([]);
+  const [foundWords, setFoundWords] = useState<Set<string>>(new Set());
+  const [selectedCells, setSelectedCells] = useState<{ row: number; col: number }[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
 
   const words = [
@@ -21,15 +21,42 @@ const Index = () => {
     setGameData(data);
   }, []);
 
-  const handleCellSelect = useCallback((row, col) => {
+  const handleCellSelect = useCallback((row: number, col: number) => {
     if (!isSelecting) {
       setSelectedCells([{ row, col }]);
       setIsSelecting(true);
     } else {
-      const newSelection = [...selectedCells, { row, col }];
+      // Create a straight line from start to current position
+      const startCell = selectedCells[0];
+      const newSelection = getCellsInLine(startCell.row, startCell.col, row, col);
       setSelectedCells(newSelection);
     }
   }, [isSelecting, selectedCells]);
+
+  const getCellsInLine = (startRow: number, startCol: number, endRow: number, endCol: number) => {
+    const cells = [];
+    const rowDiff = endRow - startRow;
+    const colDiff = endCol - startCol;
+    
+    // Determine if this is a valid line (horizontal, vertical, or diagonal)
+    const absRowDiff = Math.abs(rowDiff);
+    const absColDiff = Math.abs(colDiff);
+    
+    if (rowDiff === 0 || colDiff === 0 || absRowDiff === absColDiff) {
+      const steps = Math.max(absRowDiff, absColDiff);
+      
+      for (let i = 0; i <= steps; i++) {
+        const row = startRow + Math.round((rowDiff * i) / steps);
+        const col = startCol + Math.round((colDiff * i) / steps);
+        cells.push({ row, col });
+      }
+    } else {
+      // If not a valid line, just return the start cell
+      cells.push({ row: startRow, col: startCol });
+    }
+    
+    return cells;
+  };
 
   const handleSelectionEnd = useCallback(() => {
     if (selectedCells.length > 1 && gameData) {
@@ -39,13 +66,19 @@ const Index = () => {
       
       const reverseWord = selectedWord.split('').reverse().join('');
       
+      console.log('Selected word:', selectedWord);
+      console.log('Reverse word:', reverseWord);
+      
       // Check if the selected sequence matches any word
       const matchedWord = gameData.words.find(wordInfo => 
         wordInfo.word === selectedWord || wordInfo.word === reverseWord
       );
 
+      console.log('Matched word:', matchedWord);
+
       if (matchedWord && !foundWords.has(matchedWord.word)) {
         setFoundWords(prev => new Set([...prev, matchedWord.word]));
+        console.log('Word found:', matchedWord.word);
       }
     }
     
@@ -56,7 +89,7 @@ const Index = () => {
   const resetGame = () => {
     const data = generateWordSearch(words, 15, 12);
     setGameData(data);
-    setFoundWords(new Set());
+    setFoundWords(new Set<string>());
     setSelectedCells([]);
     setIsSelecting(false);
   };
